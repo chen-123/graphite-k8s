@@ -1,0 +1,125 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: graphite-reader
+spec:
+  selector:
+    app: graphite-reader
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+  type: NodePort
+---
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: graphite-reader
+  labels:
+    app: graphite-reader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphite-reader
+
+  template:
+    metadata:
+      labels:
+        app: graphite-reader
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: graphite-reader
+        image: dehotot/graphite-reader:local
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: metrics
+          mountPath: /mnt/data
+
+      volumes:
+      - name: metrics
+        hostPath: 
+          path: /data
+          type: Directory
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: querycache
+spec:
+  selector:
+    app: memcached
+  ports:
+  - protocol: TCP
+    port: 11211
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: memcached
+  labels:
+    app: emcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memcached
+  template:
+    metadata:
+      labels:
+        app: memcached
+    spec:
+      containers:
+      - name: memcached
+        image: memcached
+        ports:
+        - containerPort: 11211
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: graphite-writer
+spec:
+  selector:
+    app: graphite-writer
+  ports:
+  - name: carbon
+    protocol: TCP
+    port: 2003
+  type: NodePort
+---
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: graphite-writer
+  labels:
+    app: graphite-writer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphite-writer
+
+  template:
+    metadata:
+      labels:
+        app: graphite-writer
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: graphite-writer
+        image: dehotot/graphite-writer:local
+        ports:
+        - containerPort: 2003
+        - containerPort: 7002
+        volumeMounts:
+        - name: metrics
+          mountPath: /mnt/data
+
+      volumes:
+      - name: metrics
+        hostPath: 
+          path: /data
+          type: Directory
