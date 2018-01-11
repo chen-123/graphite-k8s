@@ -60,7 +60,7 @@ kind: Deployment
 metadata:
   name: memcached
   labels:
-    app: emcached
+    app: memcached
 spec:
   replicas: 1
   selector:
